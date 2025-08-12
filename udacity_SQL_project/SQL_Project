@@ -1,0 +1,70 @@
+Num 1
+/*Least rented family category movie*/
+SELECT DISTINCT category_name, SUM(rental_count) OVER(PARTITION BY category_name) totalcat_rentnum
+FROM (
+SELECT DISTINCT film_title, category_name, COUNT(rental_id) OVER (PARTITION BY film_title) rental_count
+FROM (
+SELECT f.title film_title, c.name category_name, r.rental_id
+FROM film f
+JOIN film_category fc
+ON f.film_id = fc.film_id
+JOIN category c
+ON c.category_id = fc.category_id
+JOIN inventory i
+ON i.film_id = f.film_id
+JOIN rental r
+ON i.inventory_id = r.inventory_id
+WHERE c.name = 'Animation' OR c.name = 'Children' OR c.name = 'Classics' OR c.name = 'Comedy' OR c.name = 'Family' OR c.name = 'Music') A
+) B
+ORDER BY 2;
+
+
+Num 2
+/*  THE RENT DURATION QUARTILE  WITH THE MOST AND THE LEAST RENTED MUSIC FAMILY FRIENDLY MOVIES
+*/
+SELECT DISTINCT B.rentduration_quartile, COUNT(film_title) OVER (PARTITION BY B.category, B.rentduration_quartile) Count_for_music
+FROM(
+SELECT film_title, category, rental_duration, NTILE(4) OVER (ORDER BY rental_duration) rentduration_quartile
+FROM(                                                 
+SELECT f.title film_title, c.name category, f.rental_duration
+FROM film f
+JOIN film_category fc
+ON fc.film_id = f.film_id
+JOIN category c
+ON c.category_id = fc.category_id
+WHERE c.name = 'Animation' OR c.name = 'Children' OR c.name = 'Classics' OR c.name = 'Comedy' OR c.name = 'Family' OR c.name = 'Music') A
+  )B
+WHERE B.category = 'Music'
+ORDER BY 1;
+
+                                                                      
+
+Num 3
+/*THE TOP 5 CUSTOMER WHO HAVE RENTED MOVIES THE MOST NUMBER OF TIMES*/
+
+SELECT customer_name, num_of_rentals
+FROM(
+SELECT DISTINCT c.customer_id, c.first_name||' '||c.last_name customer_name, COUNT(rental_id) OVER (PARTITION BY c.customer_id) num_of_rentals
+FROM customer c
+JOIN rental r
+ON c.customer_id = r.customer_id
+ORDER BY 3 DESC
+LIMIT 5) A;
+
+Num 4
+/*THE  TOP 5 COUNTRIES WITH THE MOST NUMBER OF CUSTOMERS*/
+SELECT co.country country, COUNT(customer_id) num_of_customers
+FROM country co
+JOIN city ci
+ON ci.country_id =co.country_id
+JOIN address ad
+ON ad.city_id = ci.city_id
+JOIN customer c
+ON c.address_id = ad.address_id
+GROUP BY 1
+ORDER BY 2 DESC
+LIMIT 5;
+
+
+
+                                                                  
